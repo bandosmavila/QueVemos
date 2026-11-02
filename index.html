@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Qué vemos</title>
+<meta name="theme-color" content="#131015">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --fondo:#131015; --sup:#1e1a21; --sup2:#2a2530; --linea:#38323f;
+  --texto:#f3eee7; --suave:#a69e97; --acento:#f4b740; --acento-t:#1b1406;
+  --ok:#5fc48a; --mal:#e5625b;
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--fondo);color:var(--texto);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.oculto{display:none!important}
+
+/* Cabecera */
+header{position:sticky;top:0;z-index:5;background:linear-gradient(var(--fondo) 85%,transparent);padding:calc(10px + env(safe-area-inset-top)) 16px 6px}
+.arriba{display:flex;align-items:center;justify-content:space-between}
+h1{margin:0;font-size:1.45rem;letter-spacing:-.02em}
+h1 span{color:var(--acento)}
+.icono{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--suave)}
+.icono:active{background:var(--sup)}
+.pestanas{display:flex;gap:4px;margin:10px 0 8px;background:var(--sup);padding:4px;border-radius:12px;overflow-x:auto;scrollbar-width:none}
+.pestanas button{flex:1;white-space:nowrap;padding:8px 10px;border-radius:9px;font-size:.92rem;color:var(--suave)}
+.pestanas button.activa{background:var(--sup2);color:var(--texto);font-weight:600}
+.pestanas small{opacity:.7;margin-left:3px}
+.filtros{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.filtros::-webkit-scrollbar,.pestanas::-webkit-scrollbar,.fila::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:6px 12px;border-radius:99px;border:1px solid var(--linea);font-size:.85rem;color:var(--suave)}
+.chip.on{background:var(--acento);border-color:var(--acento);color:var(--acento-t);font-weight:600}
+.sep{flex:none;width:1px;background:var(--linea);margin:4px 2px}
+
+/* Lista */
+main{padding:4px 16px 150px;max-width:1400px;margin:0 auto}
+.dia{margin:18px 0 8px;font-size:.82rem;text-transform:uppercase;letter-spacing:.06em;color:var(--suave)}
+.dia:first-child{margin-top:6px}
+.rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+@media (min-width:900px){.rejilla{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:20px}}
+.tarjeta{text-align:left;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cartel{position:relative;aspect-ratio:2/3;border-radius:var(--r);overflow:hidden;background:linear-gradient(150deg,#3a2f45,#1c1820);display:grid;place-items:center;text-align:center;padding:10px;font-weight:600;color:var(--suave)}
+.cartel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tarjeta:active .cartel{transform:scale(.98)}
+.badges{position:absolute;left:6px;right:6px;bottom:6px;display:flex;flex-wrap:wrap;gap:4px}
+.badge{font-size:.7rem;font-weight:700;padding:3px 7px;border-radius:6px;line-height:1.2;box-shadow:0 1px 4px #0008}
+.badge.nada{background:#000b;color:#ddd;font-weight:500}
+.pie b{display:block;font-size:.95rem;line-height:1.25;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pie small{color:var(--suave);font-size:.8rem}
+.vacio{text-align:center;color:var(--suave);padding:60px 20px;max-width:420px;margin:0 auto}
+.vacio b{display:block;color:var(--texto);font-size:1.1rem;margin-bottom:6px}
+footer{color:#7d756f;font-size:.72rem;text-align:center;padding:0 16px 130px;line-height:1.5}
+
+/* Barra para añadir */
+.barra{position:fixed;left:0;right:0;bottom:0;z-index:6;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--fondo) 30%);display:flex;gap:10px;align-items:center;max-width:720px;margin:0 auto}
+.barra form{flex:1;display:flex}
+.barra input{flex:1;min-width:0;background:var(--sup);border:1px solid var(--linea);color:var(--texto);border-radius:99px;padding:14px 18px;font:inherit;font-size:16px}
+.barra input:focus{outline:2px solid var(--acento);outline-offset:-1px}
+.mic{flex:none;width:58px;height:58px;border-radius:50%;background:var(--acento);color:var(--acento-t);display:grid;place-items:center;box-shadow:0 6px 20px #f4b74044}
+.mic.grabando{background:var(--mal);color:#fff;animation:latido 1s infinite}
+@keyframes latido{50%{box-shadow:0 0 0 12px #e5625b33}}
+
+/* Hojas y modales */
+.velo{position:fixed;inset:0;z-index:10;background:#000a;display:flex;align-items:flex-end;justify-content:center}
+.panel{background:var(--sup);width:100%;max-width:760px;max-height:88vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom))}
+@media (min-width:760px){.velo{align-items:center}.panel{border-radius:20px}}
+.panel h2{margin:0 0 4px;font-size:1.2rem}
+.cerrar{float:right;padding:6px 10px;color:var(--suave)}
+.grupo{margin-top:16px}
+.grupo h4{margin:0 0 8px;font-size:.9rem;color:var(--suave);font-weight:500}
+.grupo h4 em{color:var(--texto);font-style:normal;font-weight:600}
+.fila{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px}
+.res{flex:none;width:118px;text-align:left;display:flex;flex-direction:column;gap:4px}
+.res .cartel{border-radius:10px;font-size:.8rem}
+.res .pie b{font-size:.82rem}
+.res .pie small{font-size:.74rem}
+.res .marca{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:#000a;display:grid;place-items:center;font-weight:700;font-size:.95rem}
+.res.hecho .marca{background:var(--ok);color:#06210f}
+.res.pendiente .cartel{opacity:.5}
+.res.hecho .cartel{outline:3px solid var(--ok);outline-offset:-3px}
+.cargando,.nada-res{color:var(--suave);font-size:.88rem;margin:6px 0}
+.boton{display:block;width:100%;padding:14px;border-radius:12px;background:var(--sup2);font-weight:600;margin-top:8px;text-align:center;text-decoration:none;color:var(--texto)}
+.boton.principal{background:var(--acento);color:var(--acento-t)}
+.boton.peligro{color:var(--mal);background:transparent;font-weight:500}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dos .boton{margin-top:0}
+.ficha{display:flex;gap:14px}
+.ficha .cartel{width:118px;flex:none;border-radius:10px}
+.ficha h2{font-size:1.25rem;line-height:1.2}
+.meta{color:var(--suave);font-size:.88rem;margin:4px 0}
+.sinopsis{font-size:.95rem;line-height:1.5;color:#ddd5cc;margin:14px 0}
+.donde{background:var(--fondo);border-radius:12px;padding:12px;margin:12px 0;font-size:.88rem}
+.donde .badges{position:static;margin:6px 0}
+.donde .badge{font-size:.85rem;padding:5px 10px}
+.donde a{color:var(--acento)}
+.peque{color:var(--suave);font-size:.78rem}
+label{display:block;margin:14px 0 4px;font-size:.88rem;color:var(--suave)}
+.campo{width:100%;background:var(--fondo);border:1px solid var(--linea);color:var(--texto);border-radius:10px;padding:12px;font:inherit;font-size:16px}
+.aviso{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);background:#fff;color:#111;padding:10px 16px;border-radius:10px;font-size:.9rem;opacity:0;pointer-events:none;transition:.25s;z-index:20;max-width:90vw}
+.aviso.ver{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="arriba">
+    <h1>Qué <span>vemos</span></h1>
+    <button class="icono" id="btnAjustes" aria-label="Ajustes">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </div>
+  <nav class="pestanas" id="pestanas"></nav>
+  <div class="filtros" id="filtros"></div>
+</header>
+
+<main id="lista"><p class="vacio">Cargando…</p></main>
+
+<footer>Datos e imágenes de TMDB · Dónde ver: JustWatch.<br>Esta app usa la API de TMDB, pero no está avalada ni certificada por TMDB.</footer>
+
+<div class="barra">
+  <form id="formAnadir" autocomplete="off">
+    <input id="entrada" enterkeyhint="search" placeholder="Añadir: títulos separados por comas">
+  </form>
+  <button class="mic" id="btnMic" aria-label="Añadir por voz">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
+  </button>
+</div>
+
+<div class="velo oculto" id="hoja"><div class="panel">
+  <button class="cerrar" data-cerrar>Hecho</button>
+  <h2>Toca para añadir</h2>
+  <p class="peque">Primero salen las que están en vuestras plataformas.</p>
+  <div id="resultados"></div>
+  <button class="boton principal" data-cerrar style="margin-top:18px">Hecho</button>
+</div></div>
+
+<div class="velo oculto" id="detalle"><div class="panel" id="detallePanel"></div></div>
+
+<div class="velo oculto" id="config"><div class="panel">
+  <h2>Configuración</h2>
+  <p class="peque" id="configMsg">Necesitas el código que pusiste en el servidor.</p>
+  <form id="formConfig">
+    <div id="campoUrl"><label for="cUrl">Dirección del servidor (Apps Script)</label>
+    <input class="campo" id="cUrl" placeholder="https://script.google.com/macros/s/…/exec"></div>
+    <label for="cCodigo">Código</label>
+    <input class="campo" id="cCodigo" type="password" autocomplete="off">
+    <label for="cNombre">¿Quién eres? (para saber quién propuso cada título)</label>
+    <input class="campo" id="cNombre" maxlength="30" placeholder="Tu nombre">
+    <button class="boton principal" type="submit" style="margin-top:18px">Guardar</button>
+  </form>
+  <button class="boton" id="btnDemo">Probar con datos de ejemplo</button>
+</div></div>
+
+<div class="aviso" id="aviso"></div>
+
+<script>
+// Si pegas aquí la dirección de tu Apps Script, en cada móvil solo habrá que poner el código.
+const URL_FIJA = 'https://script.google.com/macros/s/AKfycbzi7R7YUdmT_Y1Di975D7dmjjBcLvkVK44YjNWxW7i-E9kpOXOt2WyEBSwkCozVHiMk/exec';
+
+const PLATS = {
+  'Netflix':     ['#e50914', '#fff'],
+  'Prime Video': ['#1a98ff', '#fff'],
+  'Disney+':     ['#1b3fa8', '#fff'],
+  'HBO Max':     ['#5b2bd8', '#fff'],
+  'Movistar+':   ['#019df4', '#fff'],
+  'Filmin':      ['#f1ede6', '#141414'],
+  'DAZN':        ['#f4ff00', '#141414']
+};
+const PESTANAS = [['candidata', 'Candidatas'], ['viendo', 'Viendo'], ['vista', 'Vistas'], ['descartada', 'Descartadas']];
+const VACIOS = {
+  candidata: ['El banquillo está vacío', 'Cuando estéis buscando qué ver, di o escribe los títulos que os llamen la atención.'],
+  viendo: ['No estáis viendo nada', 'Abre una candidata y pulsa «Empezamos a verla».'],
+  vista: ['Todavía no hay vistas', 'Aquí quedará todo lo que terminéis.'],
+  descartada: ['Nada descartado', 'Lo que descartéis queda aquí por si cambiáis de idea.']
+};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+let cfg = leerCfg();
+const est = { items: [], tab: 'candidata', tipo: 'todo', corto: false, plats: new Set(), cargado: false };
+const resultados = {};
+
+function leerCfg() { try { return JSON.parse(localStorage.getItem('quevemos') || '{}'); } catch (e) { return {}; } }
+function guardarCfg(c) { cfg = c; try { localStorage.setItem('quevemos', JSON.stringify(c)); } catch (e) {} }
+const urlServidor = () => cfg.url || URL_FIJA;
+
+/* ---------- Servidor ---------- */
+async function api(accion, datos = {}) {
+  if (urlServidor() === 'demo') return demo(accion, datos);
+  const r = await fetch(urlServidor(), { method: 'POST', body: JSON.stringify({ accion, codigo: cfg.codigo, ...datos }) });
+  const j = await r.json();
+  if (!j.ok) {
+    if (j.error === 'codigo') abrirConfig('El código no es correcto.');
+    throw new Error(j.error || 'Error');
+  }
+  return j;
+}
+
+async function cargar(silencioso) {
+  if (!urlServidor() || !cfg.codigo) { abrirConfig(); return; }
+  try {
+    const j = await api('listar');
+    est.items = j.items;
+    est.cargado = true;
+    render();
+  } catch (e) {
+    if (!silencioso) {
+      if (!est.cargado) $('#lista').innerHTML = `<div class="vacio"><b>No se pudo conectar</b>${esc(e.message)}</div>`;
+      aviso('No se pudo conectar con el servidor');
+    }
+  }
+}
+
+function upsert(item) {
+  const i = est.items.findIndex(x => x.id === item.id);
+  if (i >= 0) est.items[i] = item; else est.items.push(item);
+}
+
+/* ---------- Pintar ---------- */
+function badge(p) {
+  const [c, t] = PLATS[p] || ['#555', '#fff'];
+  return `<span class="badge" style="background:${c};color:${t}">${esc(p)}</span>`;
+}
+function badges(pl) {
+  const mias = (pl && pl.mias) || [];
+  if (mias.length) return mias.map(badge).join('');
+  return `<span class="badge nada">${pl && pl.pago ? 'Solo alquiler o compra' : 'No está en las vuestras'}</span>`;
+}
+function dur(m) { m = +m; const h = Math.floor(m / 60), r = m % 60; return h ? `${h} h${r ? ' ' + r + ' min' : ''}` : `${r} min`; }
+function meta(i) {
+  const p = [i.tipo === 'tv' ? 'Serie' : 'Película'];
+  if (i.anio) p.push(i.anio);
+  if (i.tipo === 'movie' && i.duracion) p.push(dur(i.duracion));
+  if (i.tipo === 'tv' && i.temporadas) p.push(i.temporadas + (i.temporadas == 1 ? ' temporada' : ' temporadas'));
+  return p.join(' · ');
+}
+function cartel(i) {
+  return `<div class="cartel">${i.cartel ? `<img loading="lazy" src="${esc(i.cartel)}" alt="">` : esc(i.titulo)}`;
+}
+const esCorta = i => { const d = +i.duracion || 0; return d > 0 && (i.tipo === 'movie' ? d <= 105 : d <= 35); };
+const fechaLarga = iso => new Date(iso).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+const fechaCorta = iso => iso ? new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }) : '';
+
+function render() {
+  const n = {};
+  est.items.forEach(i => n[i.estado] = (n[i.estado] || 0) + 1);
+  $('#pestanas').innerHTML = PESTANAS.map(([k, t]) =>
+    `<button data-tab="${k}" class="${est.tab === k ? 'activa' : ''}">${t}${n[k] ? `<small>${n[k]}</small>` : ''}</button>`).join('');
+
+  const chip = (attr, val, txt, on) => `<button class="chip ${on ? 'on' : ''}" data-${attr}="${esc(val)}">${esc(txt)}</button>`;
+  $('#filtros').innerHTML =
+    chip('tipo', 'todo', 'Todo', est.tipo === 'todo') + chip('tipo', 'movie', 'Películas', est.tipo === 'movie') +
+    chip('tipo', 'tv', 'Series', est.tipo === 'tv') + chip('corto', '1', 'Algo corto', est.corto) +
+    '<span class="sep"></span>' + Object.keys(PLATS).map(p => chip('plat', p, p, est.plats.has(p))).join('');
+
+  let lista = est.items.filter(i => i.estado === est.tab);
+  const hayEnPestana = lista.length > 0;
+  if (est.tipo !== 'todo') lista = lista.filter(i => i.tipo === est.tipo);
+  if (est.corto) lista = lista.filter(esCorta);
+  if (est.plats.size) lista = lista.filter(i => (i.plataformas.mias || []).some(p => est.plats.has(p)));
+  const clave = est.tab === 'candidata' ? 'anadido' : 'cambio';
+  lista.sort((a, b) => String(b[clave] || b.anadido).localeCompare(String(a[clave] || a.anadido)));
+
+  const tarjeta = i => `<button class="tarjeta" data-id="${esc(i.id)}">${cartel(i)}<div class="badges">${badges(i.plataformas)}</div></div>
+    <div class="pie"><b>${esc(i.titulo)}</b><small>${esc(meta(i))}</small></div></button>`;
+
+  if (!lista.length) {
+    const [t, d] = hayEnPestana ? ['Nada con estos filtros', 'Prueba a quitar alguno.'] : VACIOS[est.tab];
+    $('#lista').innerHTML = `<div class="vacio"><b>${t}</b>${d}</div>`;
+    return;
+  }
+  if (est.tab !== 'candidata') { $('#lista').innerHTML = `<div class="rejilla">${lista.map(tarjeta).join('')}</div>`; return; }
+
+  // Candidatas: agrupadas por el día en que salieron como opción
+  const grupos = [];
+  lista.forEach(i => {
+    const dia = (i.anadido || '').slice(0, 10);
+    let g = grupos.find(x => x.dia === dia);
+    if (!g) grupos.push(g = { dia, items: [] });
+    g.items.push(i);
+  });
+  $('#lista').innerHTML = grupos.map(g =>
+    `<h3 class="dia">${esc(g.dia ? fechaLarga(g.items[0].anadido) : 'Sin fecha')} · ${g.items.length}</h3>
+     <div class="rejilla">${g.items.map(tarjeta).join('')}</div>`).join('');
+}
+
+/* ---------- Detalle ---------- */
+function abrirDetalle(id) {
+  const i = est.items.find(x => x.id === id);
+  if (!i) return;
+  const pl = i.plataformas || {};
+  const acciones = {
+    candidata: [['viendo', 'Empezamos a verla', 'principal'], ['vista', 'Ya la vimos'], ['descartada', 'Descartar']],
+    viendo: [['vista', 'Terminada', 'principal'], ['candidata', 'Volver a candidatas'], ['descartada', 'Descartar']],
+    vista: [['candidata', 'Volver a candidatas'], ['viendo', 'Volver a verla']],
+    descartada: [['candidata', 'Volver a candidatas', 'principal']]
+  }[i.estado] || [];
+  const [prim, ...resto] = acciones;
+  $('#detallePanel').innerHTML = `
+    <button class="cerrar" data-cerrar>Cerrar</button>
+    <div class="ficha">${cartel(i)}</div>
+      <div><h2>${esc(i.titulo)}</h2>
+        ${i.original && i.original !== i.titulo ? `<p class="meta">${esc(i.original)}</p>` : ''}
+        <p class="meta">${esc(meta(i))}</p>
+        ${i.generos ? `<p class="meta">${esc(i.generos)}</p>` : ''}
+        <p class="peque">Candidata desde el ${esc(fechaCorta(i.anadido))}${i.por ? ' · la propuso ' + esc(i.por) : ''}</p>
+      </div></div>
+    <div class="donde"><b>Dónde verla</b>
+      <div class="badges">${badges(pl)}</div>
+      ${pl.otras && pl.otras.length ? `<div class="peque">También en: ${esc(pl.otras.join(', '))}</div>` : ''}
+      <div class="peque" id="comprobado">Comprobado el ${esc(fechaCorta(i.actualizado))} · <a href="#" data-refrescar="${esc(i.id)}">comprobar ahora</a>
+      ${pl.link ? ` · <a href="${esc(pl.link)}" target="_blank" rel="noopener">más opciones</a>` : ''}</div>
+    </div>
+    ${i.sinopsis ? `<p class="sinopsis">${esc(i.sinopsis)}</p>` : ''}
+    ${prim ? `<button class="boton ${prim[2] || ''}" data-estado="${prim[0]}" data-id="${esc(i.id)}">${prim[1]}</button>` : ''}
+    ${resto.length ? `<div class="dos" style="margin-top:8px">${resto.map(a => `<button class="boton" data-estado="${a[0]}" data-id="${esc(i.id)}">${a[1]}</button>`).join('')}</div>` : ''}
+    <button class="boton peligro" data-borrar="${esc(i.id)}">Quitar de la lista</button>`;
+  $('#detalle').classList.remove('oculto');
+  // Si el dato de plataformas tiene más de 3 días, se comprueba solo
+  if (!i.actualizado || Date.now() - new Date(i.actualizado) > 3 * 864e5) refrescar(i.id, true);
+}
+
+async function refrescar(id, silencioso) {
+  try {
+    const j = await api('refrescar', { id });
+    upsert(j.item); render();
+    if (!$('#detalle').classList.contains('oculto')) abrirDetalle(id);
+    if (!silencioso) aviso('Plataformas actualizadas');
+  } catch (e) { if (!silencioso) aviso('No se pudo comprobar'); }
+}
+
+async function cambiarEstado(id, estado) {
+  cerrar();
+  const i = est.items.find(x => x.id === id);
+  const antes = i && i.estado;
+  if (i) { i.estado = estado; i.cambio = new Date().toISOString(); render(); }
+  try { upsert((await api('estado', { id, estado })).item); render(); }
+  catch (e) { if (i) { i.estado = antes; render(); } aviso('No se pudo guardar el cambio'); }
+}
+
+async function borrar(id) {
+  const i = est.items.find(x => x.id === id);
+  if (!i || !confirm(`¿Quitar «${i.titulo}» de la lista?`)) return;
+  cerrar();
+  est.items = est.items.filter(x => x.id !== id); render();
+  try { await api('borrar', { id }); } catch (e) { upsert(i); render(); aviso('No se pudo quitar'); }
+}
+
+/* ---------- Buscar y añadir ---------- */
+function trocear(texto, porVoz) {
+  const sep = porVoz ? /\s*(?:[,;\n]|\s+y\s+también\s+|\s+y\s+luego\s+|\s+también\s+|\s+y\s+)\s*/i : /\s*[,;\n]\s*/;
+  return texto.split(sep).map(s => s.trim()).filter(s => s.length > 1);
+}
+
+function buscarVarias(texto, porVoz) {
+  const partes = trocear(texto, porVoz);
+  if (!partes.length) return;
+  // Por si era un único título con «y» (p. ej. «Ana y los lobos»)
+  const juntas = porVoz && partes.length > 1 ? texto.trim() : null;
+  const consultas = juntas ? [...partes, juntas] : partes;
+  $('#resultados').innerHTML = consultas.map((q, k) =>
+    `<section class="grupo"><h4><em>${esc(q)}</em>${juntas && k === consultas.length - 1 ? ' (todo junto, por si era un solo título)' : ''}</h4>
+     <div class="fila" id="g${k}"><p class="cargando">Buscando…</p></div></section>`).join('');
+  $('#hoja').classList.remove('oculto');
+  consultas.forEach((q, k) => api('buscar', { q })
+    .then(j => pintarResultados(k, j.resultados))
+    .catch(() => { $('#g' + k).innerHTML = '<p class="nada-res">No se pudo buscar.</p>'; }));
+}
+
+function pintarResultados(k, lista) {
+  const el = $('#g' + k);
+  if (!el) return;
+  if (!lista.length) { el.innerHTML = '<p class="nada-res">No he encontrado nada con ese nombre.</p>'; return; }
+  el.innerHTML = lista.map(r => {
+    resultados[r.id] = r;
+    const ya = r.guardado || est.items.some(x => x.id === r.id);
+    return `<button class="res ${ya ? 'hecho' : ''}" data-add="${esc(r.id)}">${cartel(r)}
+      <div class="badges">${badges(r.plataformas)}</div><span class="marca">${ya ? '✓' : '+'}</span></div>
+      <div class="pie"><b>${esc(r.titulo)}</b><small>${r.tipo === 'tv' ? 'Serie' : 'Película'}${r.anio ? ' · ' + esc(r.anio) : ''}</small></div></button>`;
+  }).join('');
+}
+
+async function anadir(id) {
+  const botones = document.querySelectorAll(`[data-add="${CSS.escape(id)}"]`);
+  const b = botones[0];
+  if (!b || b.classList.contains('hecho') || b.classList.contains('pendiente')) return;
+  botones.forEach(x => x.classList.add('pendiente'));
+  const r = resultados[id];
+  try {
+    const j = await api('anadir', { tipo: r.tipo, tmdb: r.tmdb, por: cfg.nombre || '' });
+    upsert(j.item);
+    botones.forEach(x => { x.classList.remove('pendiente'); x.classList.add('hecho'); x.querySelector('.marca').textContent = '✓'; });
+    render();
+  } catch (e) {
+    botones.forEach(x => x.classList.remove('pendiente'));
+    aviso('No se pudo añadir');
+  }
+}
+
+/* ---------- Voz ---------- */
+const Reconocedor = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+function escuchar() {
+  if (!Reconocedor) { aviso('Este navegador no permite dictar. Escribe los títulos.'); $('#entrada').focus(); return; }
+  if (rec) { rec.stop(); return; }
+  rec = new Reconocedor();
+  rec.lang = 'es-ES'; rec.interimResults = true; rec.maxAlternatives = 1;
+  let final = '';
+  $('#btnMic').classList.add('grabando');
+  $('#entrada').placeholder = 'Te escucho… di uno o varios títulos';
+  rec.onresult = ev => {
+    let txt = '';
+    for (const r of ev.results) txt += r[0].transcript;
+    $('#entrada').value = txt;
+    if (ev.results[ev.results.length - 1].isFinal) final = txt;
+  };
+  rec.onerror = ev => { if (ev.error === 'not-allowed') aviso('Da permiso al micrófono para dictar'); };
+  rec.onend = () => {
+    $('#btnMic').classList.remove('grabando');
+    $('#entrada').placeholder = 'Añadir: títulos separados por comas';
+    rec = null;
+    const t = (final || $('#entrada').value).trim();
+    $('#entrada').value = '';
+    if (t) buscarVarias(t, true);
+  };
+  rec.start();
+}
+
+/* ---------- Configuración ---------- */
+function abrirConfig(msg) {
+  $('#configMsg').textContent = msg || 'Necesitas el código que pusiste en el servidor.';
+  $('#campoUrl').classList.toggle('oculto', !!URL_FIJA);
+  $('#cUrl').value = cfg.url && cfg.url !== 'demo' ? cfg.url : '';
+  $('#cCodigo').value = cfg.codigo || '';
+  $('#cNombre').value = cfg.nombre || '';
+  $('#config').classList.remove('oculto');
+}
+
+/* ---------- Utilidades de interfaz ---------- */
+function cerrar() { document.querySelectorAll('.velo').forEach(v => { if (v.id !== 'config' || (urlServidor() && cfg.codigo)) v.classList.add('oculto'); }); }
+let tAviso;
+function aviso(t) { const a = $('#aviso'); a.textContent = t; a.classList.add('ver'); clearTimeout(tAviso); tAviso = setTimeout(() => a.classList.remove('ver'), 2600); }
+
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('button, a');
+  if (!t) { if (ev.target.classList.contains('velo')) cerrar(); return; }
+  const d = t.dataset;
+  if ('cerrar' in d) return cerrar();
+  if (d.tab) { est.tab = d.tab; render(); return; }
+  if (d.tipo) { est.tipo = d.tipo; render(); return; }
+  if (d.corto) { est.corto = !est.corto; render(); return; }
+  if (d.plat) { est.plats.has(d.plat) ? est.plats.delete(d.plat) : est.plats.add(d.plat); render(); return; }
+  if (d.add) return anadir(d.add);
+  if (d.estado) return cambiarEstado(d.id, d.estado);
+  if (d.borrar) return borrar(d.borrar);
+  if (d.refrescar) { ev.preventDefault(); $('#comprobado').firstChild.textContent = 'Comprobando… '; return refrescar(d.refrescar); }
+  if (d.id && t.classList.contains('tarjeta')) return abrirDetalle(d.id);
+});
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape') cerrar(); });
+$('#btnMic').onclick = escuchar;
+$('#btnAjustes').onclick = () => abrirConfig();
+$('#formAnadir').onsubmit = ev => { ev.preventDefault(); const t = $('#entrada').value.trim(); $('#entrada').value = ''; $('#entrada').blur(); if (t) buscarVarias(t, false); };
+$('#formConfig').onsubmit = ev => {
+  ev.preventDefault();
+  const url = URL_FIJA || $('#cUrl').value.trim();
+  if (!url || !$('#cCodigo').value.trim()) { $('#configMsg').textContent = 'Falta la dirección o el código.'; return; }
+  guardarCfg({ url: URL_FIJA ? '' : url, codigo: $('#cCodigo').value.trim(), nombre: $('#cNombre').value.trim() });
+  $('#config').classList.add('oculto');
+  cargar();
+};
+$('#btnDemo').onclick = () => { guardarCfg({ url: 'demo', codigo: 'demo', nombre: $('#cNombre').value.trim() || 'Tú' }); $('#config').classList.add('oculto'); cargar(); };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) cargar(true); });
+setInterval(() => { if (!document.hidden && est.cargado) cargar(true); }, 60000);
+
+/* ---------- Modo de ejemplo (sin servidor) ---------- */
+const DEMO = (() => {
+  const hace = d => new Date(Date.now() - d * 864e5).toISOString();
+  const it = (id, tipo, titulo, anio, mias, estado, d, extra = {}) => ({
+    id, tipo, tmdb: id, titulo, original: '', anio, cartel: '', generos: 'Drama, Misterio',
+    sinopsis: 'Título de ejemplo para probar la app sin servidor. Con la app configurada aquí verás la sinopsis real.',
+    duracion: tipo === 'movie' ? 98 + d * 7 : 45, temporadas: tipo === 'tv' ? 2 : 0,
+    plataformas: { mias, otras: [], pago: !mias.length, link: '' }, estado, anadido: hace(d), por: 'Ejemplo', cambio: hace(d), actualizado: hace(0), ...extra
+  });
+  return [
+    it('d1', 'tv', 'La casa del faro', '2025', ['Netflix'], 'candidata', 0),
+    it('d2', 'movie', 'Viento de levante', '2024', ['Filmin', 'Movistar+'], 'candidata', 0),
+    it('d3', 'movie', 'El último tranvía', '2023', [], 'candidata', 0),
+    it('d4', 'tv', 'Código Orión', '2026', ['HBO Max'], 'candidata', 5),
+    it('d5', 'movie', 'Las horas pequeñas', '2022', ['Prime Video'], 'candidata', 5, { duracion: 88 }),
+    it('d6', 'tv', 'Mareas', '2025', ['Disney+'], 'viendo', 9),
+    it('d7', 'movie', 'Plaza Mayor', '2021', ['Netflix'], 'vista', 20)
+  ];
+})();
+function demo(accion, d) {
+  return new Promise(res => setTimeout(() => {
+    if (accion === 'listar') return res({ ok: true, items: DEMO });
+    if (accion === 'buscar') {
+      const p = Object.keys(PLATS);
+      return res({ ok: true, resultados: [0, 1, 2].map(n => ({
+        id: 'b-' + d.q + n, tipo: n === 1 ? 'tv' : 'movie', tmdb: 'b-' + d.q + n,
+        titulo: d.q + (n ? ' ' + (n + 1) : ''), anio: String(2024 - n * 6), cartel: '',
+        plataformas: { mias: n === 2 ? [] : [p[(d.q.length + n) % p.length]], otras: [], pago: n === 2 }, guardado: ''
+      })) });
+    }
+    if (accion === 'anadir') {
+      const r = resultados[d.tipo === 'tv' || d.tipo === 'movie' ? Object.keys(resultados).find(k => resultados[k].tmdb === d.tmdb) : ''];
+      const item = { ...r, original: '', sinopsis: '', generos: '', duracion: 0, temporadas: 0, estado: 'candidata', anadido: new Date().toISOString(), cambio: new Date().toISOString(), actualizado: new Date().toISOString(), por: d.por };
+      DEMO.push(item); return res({ ok: true, item });
+    }
+    const i = DEMO.find(x => x.id === d.id);
+    if (accion === 'estado' && i) { i.estado = d.estado; return res({ ok: true, item: i }); }
+    if (accion === 'refrescar' && i) { i.actualizado = new Date().toISOString(); return res({ ok: true, item: i }); }
+    if (accion === 'borrar') { const k = DEMO.findIndex(x => x.id === d.id); if (k >= 0) DEMO.splice(k, 1); return res({ ok: true }); }
+    res({ ok: false, error: 'demo' });
+  }, 350));
+}
+
+cargar();
+</script>
+</body>
+</html>
